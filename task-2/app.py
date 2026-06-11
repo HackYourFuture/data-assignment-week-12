@@ -34,7 +34,9 @@ def get_dag_runs(dag_id: str, limit: int = 10) -> list:
     """Return recent DAG runs from the Airflow REST API."""
     # TODO: implement this function
     # Endpoint: GET {AIRFLOW_URL}/api/v2/dags/{dag_id}/dagRuns
-    # Auth: requests.get(..., auth=(AIRFLOW_USER, AIRFLOW_PASS))
+    # Auth (Airflow 3): POST {AIRFLOW_URL}/auth/token with username/password to
+    #   get an access_token, then send headers={"Authorization": f"Bearer {token}"}.
+    #   Basic Auth (auth=(user, pass)) returns 401 on Airflow 3. Cache the token.
     # Return: list of run dicts, each with "state", "start_date", "end_date"
     raise NotImplementedError("TODO: implement get_dag_runs")
 
