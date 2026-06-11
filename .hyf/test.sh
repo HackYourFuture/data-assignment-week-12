@@ -1,81 +1,74 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
-# Week 12 autograder
-# Checks:
-#   1. metric_definitions.md has at least 3 metric entries
-#   2. app.py uses @st.cache_data
-#   3. app.py does not contain hardcoded passwords (heuristic: no "password" = "...")
+# Week 12 autograder.
+# Ladder: the untouched scaffold must FAIL; a completed Minimum solution passes.
+# Work-verifying checks (not mere file presence):
+#   - metric Names filled with real (non-placeholder) values
+#   - Panel 1 implemented (no NotImplementedError / TODO: implement left)
+#   - AI_ASSIST.md filled with real content
 
-PASS=true
+PASSING=6
 SCORE=0
 
 check() {
-    local description="$1"
-    local result="$2"
-    if [ "$result" = "true" ]; then
-        echo "  PASS  $description"
-        SCORE=$((SCORE + 1))
-    else
-        echo "  FAIL  $description"
-        PASS=false
-    fi
+    if [ "$2" = "true" ]; then echo "  PASS  $1"; SCORE=$((SCORE + 1));
+    else echo "  FAIL  $1"; fi
 }
 
 METRIC_FILE="../task-1/metric_definitions.md"
 APP_FILE="../task-2/app.py"
+AI_FILE="../AI_ASSIST.md"
 
-# Check 1: metric definitions file exists
-if [ -f "$METRIC_FILE" ]; then
-    check "metric_definitions.md exists" "true"
+# 1. metric_definitions.md exists
+[ -f "$METRIC_FILE" ] && check "metric_definitions.md exists" "true" || check "metric_definitions.md exists" "false"
+
+# 2. >=3 metric Name fields filled with a REAL value (not empty, not _(...)_ placeholder)
+FILLED=$(grep -E '^\| \*\*Name\*\* \|' "$METRIC_FILE" 2>/dev/null \
+    | sed -E 's/^\| \*\*Name\*\* \|([^|]*)\|.*/\1/' \
+    | grep -vE '^[[:space:]]*$' | grep -vF '_(' | wc -l | tr -d ' ')
+[ "${FILLED:-0}" -ge 3 ] && check "3+ metric Name fields filled" "true" \
+    || check "3+ metric Name fields filled (found ${FILLED:-0})" "false"
+
+# 3. task-2/app.py exists
+[ -f "$APP_FILE" ] && check "task-2/app.py exists" "true" || check "task-2/app.py exists" "false"
+
+# 4. Panel 1 implemented: no NotImplementedError / TODO: implement remaining
+if grep -qE 'raise NotImplementedError|TODO: implement' "$APP_FILE" 2>/dev/null; then
+    check "Panel 1 implemented (get_dag_runs)" "false"
 else
-    check "metric_definitions.md exists" "false"
+    check "Panel 1 implemented (get_dag_runs)" "true"
 fi
 
-# Check 2: at least 3 metric sections
-METRIC_COUNT=$(grep -c "^## Metric" "$METRIC_FILE" 2>/dev/null || echo 0)
-if [ "$METRIC_COUNT" -ge 3 ]; then
-    check "metric_definitions.md has ≥3 metrics" "true"
+# 5. app.py uses @st.cache_data (quality: do not strip caching)
+grep -q "st.cache_data" "$APP_FILE" 2>/dev/null \
+    && check "app.py uses @st.cache_data" "true" || check "app.py uses @st.cache_data" "false"
+
+# 6. app.py has no hardcoded password
+if grep -qE 'password[[:space:]]*=[[:space:]]*"[^"]+"' "$APP_FILE" 2>/dev/null; then
+    check "app.py has no hardcoded password" "false"
 else
-    check "metric_definitions.md has ≥3 metrics (found $METRIC_COUNT)" "false"
+    check "app.py has no hardcoded password" "true"
 fi
 
-# Check 3: at least 3 metrics have a non-empty Name field
-FILLED=$(grep -A1 "\*\*Name\*\*" "$METRIC_FILE" 2>/dev/null | grep -v "^--$" | grep -v "Name" | grep -v "^$" | grep -v "e.g\." | wc -l | tr -d ' ')
-if [ "$FILLED" -ge 3 ]; then
-    check "≥3 metric Name fields are filled" "true"
+# 7. AI_ASSIST.md filled: >=3 real content lines (exclude blanks, headings, placeholders)
+if [ -f "$AI_FILE" ]; then
+    AI_LINES=$(grep -vE '^[[:space:]]*$|^#|^⚠️|^Document' "$AI_FILE" | grep -vF '_(' | wc -l | tr -d ' ')
+    [ "${AI_LINES:-0}" -ge 3 ] && check "AI_ASSIST.md documents LLM usage" "true" \
+        || check "AI_ASSIST.md documents LLM usage (needs 3+ entries)" "false"
 else
-    check "≥3 metric Name fields are filled (found $FILLED)" "false"
+    check "AI_ASSIST.md exists" "false"
 fi
 
-# Check 4: app.py exists
-if [ -f "$APP_FILE" ]; then
-    check "task-2/app.py exists" "true"
-else
-    check "task-2/app.py exists" "false"
-fi
+if [ "$SCORE" -ge "$PASSING" ]; then PASS=true; else PASS=false; fi
 
-# Check 5: app.py uses @st.cache_data
-if grep -q "st.cache_data" "$APP_FILE" 2>/dev/null; then
-    check "app.py uses @st.cache_data" "true"
-else
-    check "app.py uses @st.cache_data" "false"
-fi
-
-# Check 6: app.py does not hardcode a password (heuristic)
-if grep -qE 'password\s*=\s*"[^"]+"' "$APP_FILE" 2>/dev/null; then
-    check "app.py has no hardcoded password string" "false"
-else
-    check "app.py has no hardcoded password string" "true"
-fi
-
-cat << JSONEOF > score.json
+cat > score.json <<JSONEOF
 {
   "score": $SCORE,
   "pass": $PASS,
-  "passingScore": 4
+  "passingScore": $PASSING
 }
 JSONEOF
 
 echo ""
-echo "Score: $SCORE / 6  —  pass: $PASS"
+echo "Score: $SCORE / 7  (passingScore 6)  pass: $PASS"

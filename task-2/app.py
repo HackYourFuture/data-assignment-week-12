@@ -1,5 +1,5 @@
 """
-Week 12 Engineering Dashboard — Streamlit app
+Week 12 Engineering Dashboard , Streamlit app
 
 Run:  streamlit run app.py
 
@@ -33,13 +33,14 @@ st.title("Pipeline Health Dashboard")
 def get_dag_runs(dag_id: str, limit: int = 10) -> list:
     """Return recent DAG runs from the Airflow REST API."""
     # TODO: implement this function
-    # Endpoint: GET {AIRFLOW_URL}/api/v1/dags/{dag_id}/dagRuns
+    # Endpoint: GET {AIRFLOW_URL}/api/v2/dags/{dag_id}/dagRuns
     # Auth: requests.get(..., auth=(AIRFLOW_USER, AIRFLOW_PASS))
     # Return: list of run dicts, each with "state", "start_date", "end_date"
     raise NotImplementedError("TODO: implement get_dag_runs")
 
 
-dag_id = "ingest_taxi_month"  # TODO: update with your actual DAG id
+dag_id = "ingest_taxi_month"  # TODO: on the shared Airflow your DAG id is
+#                                 prefixed: <yourname>_ingest_taxi_month
 
 st.subheader("Last DAG run")
 try:
@@ -48,9 +49,9 @@ try:
         last = runs[0]
         state = last["state"]
         if state == "success":
-            st.success(f"Last run: **{state}** — started {last['start_date']}")
+            st.success(f"Last run: **{state}**, started {last['start_date']}")
         elif state == "failed":
-            st.error(f"Last run: **{state}** — check Airflow logs")
+            st.error(f"Last run: **{state}**, check Airflow logs")
         else:
             st.warning(f"Last run: **{state}**")
     else:
