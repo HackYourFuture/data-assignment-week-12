@@ -25,7 +25,7 @@ how you would actually ship an orchestration change on the job.
 | 4 | `dags/taxi_pipeline.py` (`default_args`) | Task 4 | `retries` + `retry_delay` |
 | 5 | (run it) | Task 5 | 7-run backfill + idempotency evidence |
 | 6 | `RUNBOOK.md` | Task 6 | operational notes |
-| 7 | shared repo | Task 7 (Target) | deploy your namespaced DAG |
+| 7 | shared repo | Task 7 (Target) | deploy namespaced DAG (`<yourname>_taxi_pipeline`); keep local `taxi_pipeline` |
 | 8 | `AI_ASSIST.md` | Task 8 | document one LLM use |
 
 ## Repository layout
@@ -55,6 +55,21 @@ astro dev pytest tests/test_dag_integrity.py --args "-v"
 
 Open the UI URL, add the `azure_pg` connection (Admin → Connections), unpause
 `taxi_pipeline`, and trigger a run for a real month (e.g. `2024-01-01`).
+
+## Local vs shared `dag_id` (Task 7)
+
+Keep `dag_id="taxi_pipeline"` in **this** repo for local Astro (Tasks 1–6 and
+local screenshots). Only the copy you push to the shared deploy repo
+([c55-shared-airflow](https://github.com/lassebenni/c55-shared-airflow)) must
+use `<yourname>_taxi_pipeline` plus a `student:<yourname>` tag. Example:
+`baraah_taxi_pipeline`. You do not redo local work under the new name.
+
+Screenshots:
+- Graph / Grid / logs: local Astro on `taxi_pipeline` is fine
+- Shared deploy proof: shared UI on `<yourname>_taxi_pipeline`, filtered by
+  `student:<yourname>`, all three tasks green
+
+Full Task 7 steps live in the curriculum assignment chapter.
 
 ## Check your score locally
 
